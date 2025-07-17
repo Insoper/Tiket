@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Form Pemesanan Tiket</title>
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#007bff" />
+  <link rel="icon" type="image/png" href="icon-192.png" sizes="192x192" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+
+    .form-container {
+      max-width: 480px;
+      margin: auto;
+      background: white;
+      padding: 25px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 12px;
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #status {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Pemesanan Tiket</h2>
+    <form id="ticketForm">
+      <label for="nama">Nama</label>
+      <select name="nama" id="nama" required></select>
+
+      <label for="tujuan">Tujuan</label>
+      <input type="text" name="tujuan" required />
+
+      <label for="waktu">Waktu Terbang</label>
+      <input type="datetime-local" name="waktu" required />
+
+      <label for="pembebanan">Pembebanan</label>
+      <input type="text" name="pembebanan" required />
+
+      <input type="hidden" name="nohp" id="nohp" />
+      <input type="hidden" name="email" id="email" />
+
+      <button type="submit">Kirim</button>
+    </form>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxd5GdxoT84Qwm7-jMLuGUwJdvxIsmnYjKOA9_sCUVelUzIyOG1tqohmQN2o5gJLNgjEQ/exec";
+
+    fetch(scriptURL + "?t=" + Date.now())
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById("nama");
+        data.forEach(item => {
+          const option = document.createElement("option");
+          option.value = item.nama;
+          option.textContent = item.nama;
+          option.dataset.nohp = item.nohp;
+          option.dataset.email = item.email;
+          select.appendChild(option);
+        });
+
+        select.addEventListener("change", function () {
+          const selected = this.options[this.selectedIndex];
+          document.getElementById("nohp").value = selected.dataset.nohp || "";
+          document.getElementById("email").value = selected.dataset.email || "";
+        });
+      });
+
+    document.getElementById("ticketForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new URLSearchParams(new FormData(form));
+      const status = document.getElementById("status");
+
+      fetch(scriptURL, {
+        method: "POST",
+        body: data
+      })
+      .then(res => res.text())
+      .then(result => {
+        status.textContent = "✅ Tiket berhasil dikirim.";
+        form.reset();
+      })
+      .catch(err => {
+        console.error(err);
+        status.textContent = "❌ Gagal mengirim.";
+      });
+    });
+  </script>
+
+ <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log("✅ Service Worker terdaftar:", reg.scope))
+          .catch(err => console.error("❌ Gagal mendaftar SW:", err));
+      });
+    }
+  </script>
+</body>
+</html>
